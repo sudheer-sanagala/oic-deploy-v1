@@ -4,7 +4,12 @@ on:
   push:
     branches:
       - develop
-
+    paths: # This is the key filter for push events
+      - 'integrations/**/*.iar' # Only trigger if .iar files change in 'integrations'
+      - 'deploy_oic.py'         # Only trigger if the main deployment script changes (assuming root)
+      - '.github/workflows/deploy.yml' # Only trigger if the workflow config changes
+      # If deploy_oic.py is in 'scripts/', update to: - 'scripts/deploy_oic.py'
+      
   pull_request:
     branches:
       - stage
@@ -12,6 +17,10 @@ on:
       - main
     types:
       - closed
+    paths: # Add paths filter for pull_request if you want to be precise here too
+      - 'integrations/**/*.iar'
+      - 'deploy_oic.py'
+      - '.github/workflows/deploy.yml'      
 
 # Removed the global env: OIC_INSTANCE_NAME block.
 # OIC_INSTANCE_NAME will now be set as a secret within each GitHub Environment.
