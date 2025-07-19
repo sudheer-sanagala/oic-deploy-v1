@@ -33,14 +33,15 @@ jobs:
         id: get_iar_files
         run: |
           echo "Detecting .iar files committed in this push."
-          # Tuned: Use a more concise git diff pipeline.
-          # --diff-filter=AMR: Only look at Added, Modified, or Renamed files.
-          # grep -i '\.iar$': Case-insensitive search for .iar at the end of the filename.
-          # xargs | tr ' ': Convert newline-separated list to a single comma-separated string.
-          COMMITTED_IAR_FILES=$(git diff --name-only --diff-filter=AMR ${{ github.event.before }} ${{ github.sha }} | grep -i '\.iar$' | xargs | tr ' ' ',')
+          # Tuned: Use null delimiters for robustness with filenames containing spaces.
+          # -z with git diff: Outputs null-terminated paths.
+          # -i -z with grep: Case-insensitive search, expects/outputs null-terminated lines.
+          # -0 with xargs: Expects null-terminated input.
+          # tr '\0' ',': Translates null characters (between filenames) into commas.
+          COMMITTED_IAR_FILES=$(git diff --name-only -z --diff-filter=AMR ${{ github.event.before }} ${{ github.sha }} | grep -i -z '\.iar$' | xargs -0 | tr '\0' ',')
 
+          # The trailing comma from 'tr' is harmless as the Python script's .split(',') and .strip() handles it.
           echo "Final list of .iar files for deployment: $COMMITTED_IAR_FILES"
-          # Set the list of .iar files as an output of this step.
           echo "iar_files_to_deploy=$COMMITTED_IAR_FILES" >> $GITHUB_OUTPUT
 
       - name: Check if any .iar files were found
